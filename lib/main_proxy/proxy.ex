@@ -117,26 +117,12 @@ defmodule MainProxy.Proxy do
           result
 
         scheme_opts ->
-          opts = build_opts(scheme, scheme_opts, handler_opts, callback_module)
+          backends = Keyword.fetch!(handler_opts, :backends)
+          Logger.info("[main_proxy] Listening on #{scheme}")
 
-          Logger.info("[main_proxy] Listening on #{scheme} with options: #{inspect(opts)}")
-
-          [{Plug.Cowboy, scheme: scheme, plug: {nil, nil}, options: opts} | result]
+          [{Plug.Cowboy, scheme: scheme, plug: {MainProxy.Plug, backends: backends}} | result]
       end
     end)
-  end
-
-  defp build_opts(scheme, scheme_opts, handler_opts, callback_module) do
-    port = :proplists.get_value(:port, scheme_opts)
-    dispatch = [{:_, [{:_, MainProxy.Cowboy2Handler, {nil, handler_opts}}]}]
-
-    opts =
-      callback_module.merge_config(scheme,
-        port: port_to_integer(port),
-        dispatch: dispatch
-      )
-
-    opts ++ :proplists.delete(:port, scheme_opts)
   end
 
   @doc false
@@ -148,11 +134,4 @@ defmodule MainProxy.Proxy do
     Application.get_env(:phoenix, :serve_endpoints, false) ||
       Application.get_env(:main_proxy, :server, true)
   end
-
-  # :undefined is what :proplist.get_value returns
-  defp port_to_integer(:undefined),
-    do: raise("port is missing from the main_proxy configuration")
-
-  defp port_to_integer(port) when is_binary(port), do: String.to_integer(port)
-  defp port_to_integer(port) when is_integer(port), do: port
 end

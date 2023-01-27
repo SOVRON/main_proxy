@@ -1,3 +1,8 @@
+TODO:
+- [ ] Check if we need to bring back merge_config
+- [ ] Check if letsencrypt via site_encrypt still works
+- [ ] Get VPS working in dev
+
 # MainProxy
 
 <!-- MDOC !-->
